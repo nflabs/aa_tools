@@ -1,0 +1,2 @@
+pycryptodome==3.16.0
+pyquicklz==1.4.1

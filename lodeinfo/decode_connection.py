@@ -10,6 +10,7 @@ from Crypto.Cipher import AES
 
 KEY = a2b_hex("20AD7B28FE0D2D223C48A76E35EE0DA3AEA2B1175D69804605EC43EA4687F785")
 IV = a2b_hex("8D5291164B7414118D0C8AC7C050FD1E")
+VIGENERE_KEY = "zlApZbCgpp_"
 
 SAMPLEDATA = "AB34bTyi5o_=w8VCUPIIRBvPp08lpwxFeug1tuEhYA2BB2MGCvHya2amXKISUQjThbsuNCwLZvSPlSIvGGcNR_MBHzDIu-tDQcViLgCy-Hh4eHh53fGqgnqF5UZQSK-Ree6zdkoavkNz696t-7Wcv684IzZ21rq4OjopCEtVhAqIIL9StMKNZlij_7ZF1Kmp0rMI4rlwX1gPxdGdMvqSgBFilVttK6-aYm3jmsGJ-BdXXimM9GIRelhCPAIEVwWKsYZSCiz3awFKvu7ZvbqDPmS6cQ.."
 
@@ -144,6 +145,8 @@ class LODEINFOConnection:
 
 
 if __name__ == "__main__":
+    if not "=" in SAMPLEDATA:
+        SAMPLEDATA = VIGENERE_KEY + "=" + SAMPLEDATA
     li = LODEINFOConnection(SAMPLEDATA)
     data = li.decrypt(KEY, IV)
     print(li.parse_header())

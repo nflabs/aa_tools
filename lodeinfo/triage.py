@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 from binascii import b2a_hex
-from typing import Dict, Iterator, List, NamedTuple, Optional, Protocol
+from typing import Dict, Iterator, Tuple, List, NamedTuple, Optional, Protocol
 
 import ida_funcs
 import ida_nalt
@@ -13,6 +13,7 @@ import idc
 
 
 class AESConfig(NamedTuple):
+    address: int
     key: str
     iv: str
 
@@ -180,6 +181,13 @@ class RawShellcodeTriage:
         print(f"   - AES KEY: {aes_config.key}")
         print(f"   - AES  IV: {aes_config.iv}")
 
+        if has_vigenere(version):
+            v_key: Optional[bytes] = extract_vigenere_key(mem, aes_config.address)
+            if v_key:
+                print(f"   - Vigenere KEY: {v_key}")
+            else:
+                print("   ....could not found vigenere key, sorry ;(")
+
         return True
 
     def __check(self, mem: Dict[int, bytes]) -> bool:
@@ -250,7 +258,6 @@ def open_encypted_shellcode_with_idapro(filename: str) -> bool:
                 f"-S{SCRIPT_PATH}",
                 filename,
             ],
-            timeout=120,
         )
     except Exception as e:
         print(f"[!] Error has occured in subprocess, as: {e}")
@@ -281,6 +288,7 @@ def extract_guessing_AES_config(mem: Dict[int, bytes]) -> Optional[AESConfig]:
 
     key: List[bytes] = []
     iv: List[bytes] = []
+    head_addr: int = addr
 
     for _ in range(8):
         key.append(idc.get_operand_value(addr, 1).to_bytes(4, "little"))
@@ -290,6 +298,7 @@ def extract_guessing_AES_config(mem: Dict[int, bytes]) -> Optional[AESConfig]:
         addr = idc.next_head(addr)
 
     return AESConfig(
+        address=head_addr,
         key="".join([b2a_hex(n).decode() for n in key]),
         iv="".join([b2a_hex(n).decode() for n in iv]),
     )
@@ -338,6 +347,76 @@ def extract_version(mem: Dict[int, bytes]) -> Optional[bytes]:
 
     return version
 
+
+def extract_vigenere_key(mem: Dict[int, bytes], addr: int) -> Optional[bytes]:
+    vigenere_key_pattern: bytes = rb"\xc7\x45.\w{4}"
+    
+    addressess: List[int] = mem_search(mem, vigenere_key_pattern)
+    func = ida_funcs.get_func(addr)
+    v_addressess: List[int]= [i for i in addressess if i < addr and i > func.start_ea]
+    if not v_addressess:
+        return None
+    
+    head: int = min(v_addressess)
+    if re.search("dword ptr \[(.*)\]", idc.print_operand(head, 0)):
+        sorted_v_key: List[Tuple[int, int]] = __extract_vigenere_key_from_decompiler_mode(head, addr)
+    elif re.search("\[ebp\+var_(.*)\]", idc.print_operand(head, 0)):
+        sorted_v_key: List[Tuple[int, int]] = __extract_vigenere_key_from_assembly_mode(head, addr)
+    else:
+        return None
+        
+    vigenere_key = b""
+    for _, v_key_str in sorted_v_key:
+        vigenere_key += v_key_str.to_bytes(int(len(hex(v_key_str).lstrip("0x")) / 2), "little")
+
+    return vigenere_key
+
+
+def __extract_vigenere_key_from_decompiler_mode(head: int, addr: int) -> List[Tuple[int, int]]:
+    stack_addr: str = re.search("dword ptr \[(.*)\]", idc.print_operand(head, 0)).group(1)
+    vigenere_key_dict: Dict[int, int] = {}
+    for ea in idautils.Heads(head, addr):
+        mnem: str = idc.print_insn_mnem(ea)
+        ope: str = idc.print_operand(ea, 0)
+        if not (mnem == "mov" and stack_addr in ope):
+            continue
+        escape_str: str = stack_addr.replace("+", "\+")
+        if re.search(f"dword ptr \[{escape_str}\+(.*)\]", ope) is None and "dword ptr" in ope:
+            vigenere_key_dict[0] = idc.get_operand_value(ea, 1)
+            continue
+        offset_str: str = re.search(f"\[{escape_str}\+(.*)\]", ope).group(1)
+        offset: int = int(offset_str.replace("h", ""), 16)
+        vigenere_key_dict[offset] = idc.get_operand_value(ea, 1)
+    
+    return sorted(vigenere_key_dict.items())
+
+
+def __extract_vigenere_key_from_assembly_mode(head: int, addr: int) -> List[Tuple[int, int]]:
+    stack_addr: int = int("0x" + re.search("\[ebp\+var_(.*)\]", idc.print_operand(head, 0)).group(1), 16)
+    vigenere_key_dict: Dict[int, int] = {}
+    for ea in idautils.Heads(head, addr):
+        mnem: str = idc.print_insn_mnem(ea)
+        ope: str = idc.print_operand(ea, 0)
+        if not (mnem == "mov" and "[ebp+var_" in ope):
+            continue
+        offset_search = re.search("\[ebp\+var_(.*)\]", ope)
+        if not offset_search:
+            continue
+        offset: int = int("0x" + offset_search.group(1), 16)
+        if offset > stack_addr:
+            continue
+        vigenere_key_dict[stack_addr-offset] = idc.get_operand_value(ea, 1)
+
+    return sorted(vigenere_key_dict.items())
+
+
+def has_vigenere(version: bytes) -> bool:
+    v: int = int(version.replace(b"v", b"").replace(b".", b""))
+    # over v0.5.6, data was encrypted with Vigenere cipher.
+    if v >= 56:
+        return True
+    return False
+    
 
 def main() -> None:
     mem: Dict[int, bytes] = get_all_code()

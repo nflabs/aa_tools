@@ -39,6 +39,7 @@ Triage is performed simply by giving this file as input from "Script files..." i
 
    - AES KEY: 914bdc493db1da93ed8dcb2edb6a66cc66409651f9bb6544bfae24a79e5fa12e
    - AES  IV: f3c264d1043cd45f8a20c5aa1af62423
+   - Vigenere KEY: b'ETnxiVjNKzOiHe'
 [*] Executed RawShellcode triage
 [*] Triage script: Done
 ```

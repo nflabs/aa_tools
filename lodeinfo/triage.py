@@ -367,7 +367,10 @@ def extract_vigenere_key(mem: Dict[int, bytes], addr: int) -> Optional[bytes]:
         
     vigenere_key = b""
     for _, v_key_str in sorted_v_key:
-        vigenere_key += v_key_str.to_bytes(int(len(hex(v_key_str).lstrip("0x")) / 2), "little")
+        v_byte: bytes = v_key_str.to_bytes(int(len(hex(v_key_str).lstrip("0x")) / 2), "little")
+        vigenere_key += v_byte
+        if len(v_byte) < 4:
+            break
 
     return vigenere_key
 

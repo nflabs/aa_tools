@@ -14,11 +14,19 @@ pip install -r requirements.txt
 2. change the KEY, IV, and SAMPLEDATA environment variables according to your environment and run.
 ```sh
 ########
-# 
-#  KEY = a2b_hex("20AD7B28FE0D2D223C48A76E35EE0DA3AEA2B1175D69804605EC43EA4687F785")
-#  IV = a2b_hex("8D5291164B7414118D0C8AC7C050FD1E")
-#  SAMPLEDATA = "AB34bTyi5o_=w8VCUPIIRBvPp08lpwxFeug1tuEhYA2BB2MGCvHya2amXKISUQjThbsuNCwLZvSPlSIvGGcNR_MBHzDIu-tDQcViLgCy-Hh4eHh53fGqgnqF5UZQSK-Ree6zdkoavkNz696t-7Wcv684IzZ21rq4OjopCEtVhAqIIL9StMKNZlij_7ZF1Kmp0rMI4rlwX1gPxdGdMvqSgBFilVttK6-aYm3jmsGJ-BdXXimM9GIRelhCPAIEVwWKsYZSCiz3awFKvu7ZvbqDPmS6cQ.."
-# 
+#  
+# =====================
+#  Beacon (connection from client)  
+#    KEY = a2b_hex("20AD7B28FE0D2D223C48A76E35EE0DA3AEA2B1175D69804605EC43EA4687F785")
+#    IV = a2b_hex("8D5291164B7414118D0C8AC7C050FD1E")
+#    SAMPLEDATA = "AB34bTyi5o_=w8VCUPIIRBvPp08lpwxFeug1tuEhYA2BB2MGCvHya2amXKISUQjThbsuNCwLZvSPlSIvGGcNR_MBHzDIu-tDQcViLgCy-Hh4eHh53fGqgnqF5UZQSK-Ree6zdkoavkNz696t-7Wcv684IzZ21rq4OjopCEtVhAqIIL9StMKNZlij_7ZF1Kmp0rMI4rlwX1gPxdGdMvqSgBFilVttK6-aYm3jmsGJ-BdXXimM9GIRelhCPAIEVwWKsYZSCiz3awFKvu7ZvbqDPmS6cQ.."
+# =====================
+#  Response (connection from server) 
+#    KEY = a2b_hex("20AD7B28FE0D2D223C48A76E35EE0DA3AEA2B1175D69804605EC43EA4687F785")
+#    IV = a2b_hex("8D5291164B7414118D0C8AC7C050FD1E")
+#    VIGENERE_KEY = "zlApZbCgpp_"
+#    SAMPLEDATA = "<Base64 data send by server>"
+#
 # #######
 ❯ python decode_connection.py 
 HEADER(sha512_128=b'e87d884fa9005a7c2963b7a41bca4ad2', payload_size=244)

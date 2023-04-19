@@ -149,6 +149,8 @@ if __name__ == "__main__":
         SAMPLEDATA = VIGENERE_KEY + "=" + SAMPLEDATA
     li = LODEINFOConnection(SAMPLEDATA)
     data = li.decrypt(KEY, IV)
+    print(li.parse_header())
     if "=" in SAMPLEDATA:
-        print(li.parse_header())
-    print(li.parse_decrypted_data(data))
+        print(li.parse_decrypted_data(data))
+    else:
+        print(data)
